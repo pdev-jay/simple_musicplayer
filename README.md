@@ -9,7 +9,3 @@ This is a simple mp3 player that obtains audio files from a physical device when
 
 ## Features
 
-- # simple_musicplayer
-# simple_musicplayer
-# simple_musicplayer
-# simple_musicplayer
