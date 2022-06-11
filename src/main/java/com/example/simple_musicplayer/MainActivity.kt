@@ -29,8 +29,8 @@ import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
-    val ALBUM_IMAGE_SIZE_LARGE = 240
-    val ALBUM_IMAGE_SIZE_SMALL = 100
+    private val ALBUM_IMAGE_SIZE_LARGE = 240
+    private val ALBUM_IMAGE_SIZE_SMALL = 100
 
     val binding: ActivityMainBinding by lazy {
         ActivityMainBinding.inflate(layoutInflater)
@@ -53,9 +53,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     lateinit var adapter: MainListAdapter
 
-    //현재 재생되고 있는 음악 리스트, 현재 화면에 보여지는 음악 리스트를 분리
-    var playMusicList: MutableList<Music> = mutableListOf()
-    var displayMusicList: MutableList<Music> = mutableListOf()
+    //현재 재생되고 있는 음악 리스트, 검색된 음악 리스트, 현재 화면에 보여지는 음악 리스트를 분리
+    var playMusicList: MutableList<Music>? = mutableListOf()
+    var displayMusicList: MutableList<Music>? = mutableListOf()
 
     var typeOfList = Type.ALL
 
@@ -205,13 +205,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
 
             R.id.menuArtist -> {
-                binding.collapssingToolbarLayout.title = "Artist"
                 val bottomSheetDialog = BottomSheetDialog(Type.ARTIST)
                 bottomSheetDialog.show(supportFragmentManager, bottomSheetDialog.TAG)
             }
 
             R.id.menuGenre -> {
-                binding.collapssingToolbarLayout.title = "Genre"
                 val bottomSheetDialog = BottomSheetDialog(Type.GENRE)
                 bottomSheetDialog.show(supportFragmentManager, bottomSheetDialog.TAG)
             }
@@ -262,7 +260,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         displayMusicList = dbHelper.selectMusicAll()
 
         //음악 정보가 없다면 현재 기기의 저장소에서 음악 정보를 가져옴
-        if (displayMusicList == null || displayMusicList.size <= 0) {
+        if (displayMusicList == null || displayMusicList?.size!! <= 0) {
             displayMusicList = getMusicListFromMobile()
             for (i in 0 until displayMusicList!!.size) {
                 val music = displayMusicList!![i]
@@ -273,11 +271,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 }
             }
         }
-        Log.d("Log_debug", "${displayMusicList}")
 
         val layoutManager = LinearLayoutManager(this)
 
-        adapter = MainListAdapter(this, displayMusicList)
+        adapter = MainListAdapter(this, displayMusicList!!)
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager = layoutManager
     }
@@ -321,8 +318,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     fun getFilteredMusicList(filter: String?, type: Type) {
         val filteredMusicList = dbHelper.selectFilter(filter, type)
 
-        displayMusicList.clear()
-        displayMusicList .addAll(filteredMusicList)
+        displayMusicList?.clear()
+        if (filteredMusicList != null) {
+            displayMusicList?.addAll(filteredMusicList)
+        }
 
         adapter.initialise()
         adapter.notifyDataSetChanged()
@@ -336,10 +335,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         //현재 보여지는 목록에서 한 음악을 재생했을 때 재생될 플레이리스트 설정
 
-        playMusicList.clear()
+        playMusicList?.clear()
 
-        playMusicList.addAll(displayMusicList)
-        currentMusic = playMusicList[playMusicList.indexOf(music)]
+        playMusicList?.addAll(displayMusicList!!)
+        currentMusic = playMusicList?.get(playMusicList!!.indexOf(music))
 
         bottomSheetUpdate(music)
 
@@ -418,6 +417,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     fun musicStart() {
         mediaPlayer?.start()
+        adapter.notifyDataSetChanged() //아이템뷰의 배경색을 바꾸기 위한 notification
         isPlaying = true
         bottomSheetBinding.bottomSheetSmall.ivPlaySmall.setImageResource(R.drawable.ic_baseline_pause_24)
         bottomSheetBinding.ivPlayLarge.setImageResource(R.drawable.ic_baseline_pause_24)
@@ -452,7 +452,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     fun musicNext(){
 
-        if (playMusicList.isEmpty()){
+        if (playMusicList?.isEmpty() == true){
             Toast.makeText(this, "Playlist is empty", Toast.LENGTH_SHORT).show()
             return
         }
@@ -462,15 +462,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         var nextMusic: Music?
 
         //현재 곡이 마지막 곡이 아닐 때
-        if (playMusicList.indexOf(currentMusic) != playMusicList.lastIndex){
-            nextMusic = playMusicList[playMusicList.indexOf(currentMusic) + 1]
-            mediaPlayer = MediaPlayer.create(this, nextMusic.getMusicUri())
-            bottomSheetBinding.seekBar.max = nextMusic.duration ?: 0
+        if (playMusicList?.indexOf(currentMusic) != playMusicList?.lastIndex){
+            nextMusic = playMusicList?.get(playMusicList?.indexOf(currentMusic)?.plus(1) ?: 0)
+            mediaPlayer = MediaPlayer.create(this, nextMusic?.getMusicUri())
+            bottomSheetBinding.seekBar.max = nextMusic?.duration ?: 0
         } else {
             //현재 곡이 마지막 곡이라면 첫번째 곡의 정보 가져옴
-            nextMusic = playMusicList.first()
-            mediaPlayer = MediaPlayer.create(this, nextMusic.getMusicUri())
-            bottomSheetBinding.seekBar.max = nextMusic.duration ?: 0
+            nextMusic = playMusicList?.first()
+            mediaPlayer = MediaPlayer.create(this, nextMusic?.getMusicUri())
+            bottomSheetBinding.seekBar.max = nextMusic?.duration ?: 0
         }
 
         if (nextMusic != null) {
@@ -487,7 +487,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     fun musicPrevious(){
 
-        if (playMusicList.isEmpty()){
+        if (playMusicList?.isEmpty() == true){
             Toast.makeText(this, "Playlist is empty", Toast.LENGTH_SHORT).show()
             return
         }
@@ -501,15 +501,16 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 var previousMusic: Music?
 
                 //현재 곡이 플레이리스트의 첫번째 곡이 아닐 때 플레이리스트에서 현재 곡의 이전 곡의 정보 가져옴
-                if (playMusicList.indexOf(currentMusic) != 0){
-                    previousMusic = playMusicList[playMusicList.indexOf(currentMusic) - 1]
-                    mediaPlayer = MediaPlayer.create(this, previousMusic.getMusicUri())
-                    bottomSheetBinding.seekBar.max = previousMusic.duration ?: 0
+                if (playMusicList?.indexOf(currentMusic) != 0){
+                    previousMusic = playMusicList?.get(playMusicList?.indexOf(currentMusic)
+                        ?.minus(1) ?: 0)
+                    mediaPlayer = MediaPlayer.create(this, previousMusic?.getMusicUri())
+                    bottomSheetBinding.seekBar.max = previousMusic?.duration ?: 0
                 } else {
                     //현재 곡이 플레이리스트의 첫번째 곡일 때 플레이리스트의 마지막 곡을 재생
-                    previousMusic = playMusicList.last()
-                    mediaPlayer = MediaPlayer.create(this, previousMusic.getMusicUri())
-                    bottomSheetBinding.seekBar.max = previousMusic.duration ?: 0
+                    previousMusic = playMusicList?.last()
+                    mediaPlayer = MediaPlayer.create(this, previousMusic?.getMusicUri())
+                    bottomSheetBinding.seekBar.max = previousMusic?.duration ?: 0
                 }
 
                 if (previousMusic != null) {

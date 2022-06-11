@@ -41,8 +41,8 @@ class DBHelper(context: Context): SQLiteOpenHelper(context, "musicDB", null, 1) 
         return flag
     }
 
-    fun selectMusicAll(): MutableList<Music>{
-        var musicList: MutableList<Music> = mutableListOf<Music>()
+    fun selectMusicAll(): MutableList<Music>?{
+        var musicList: MutableList<Music>? = mutableListOf<Music>()
         val db = this.readableDatabase
 
         val selectQuery = """
@@ -67,49 +67,17 @@ class DBHelper(context: Context): SQLiteOpenHelper(context, "musicDB", null, 1) 
             }
         } catch (e: Exception){
             Log.d("Log_debug", "${e.printStackTrace()}")
+            musicList = null
         } finally {
             cursor?.close()
             db.close()
         }
+
         return musicList
     }
 
-//    fun selectMusic(query: String): MutableList<Music>{
-//        var musicList: MutableList<Music> = mutableListOf()
-//        val db = this.readableDatabase
-//        var cursor: Cursor? = null
-//
-//        //query와 유사한 문자열이 입력된다면 artist, title에 대한 select 결과 모두 가져옴
-//        val selectQuery = """
-//            select * from musicTBL where artist like '$query%' or title like '$query%'
-//        """.trimIndent()
-//
-//        try {
-//            cursor = db.rawQuery(selectQuery, null)
-//            if (cursor.count > 0) {
-//                while (cursor.moveToNext()) {
-//                    val id = cursor.getString(0)
-//                    val title = cursor.getString(1)
-//                    val artist = cursor.getString(2)
-//                    val albumId = cursor.getString(3)
-//                    val genre = cursor.getString(4)
-//                    val duration = cursor.getInt(5)
-//                    val favorite = cursor.getInt(6)
-//                    musicList?.add(Music(id, title, artist, albumId, genre, duration, favorite))
-//                }
-//            }
-//        } catch (e: Exception){
-//            Log.d("Log_debug", "${e.printStackTrace()}")
-//        } finally {
-//            cursor?.close()
-//            db.close()
-//        }
-//
-//        return musicList
-//    }
-
-    fun selectFilter(filter: String?, type: Type): MutableList<Music> {
-        var musicList: MutableList<Music> = mutableListOf<Music>()
+    fun selectFilter(filter: String?, type: Type): MutableList<Music>? {
+        var musicList: MutableList<Music>? = mutableListOf<Music>()
         val db = this.readableDatabase
 
         var selectQuery: String? = null
@@ -151,6 +119,7 @@ class DBHelper(context: Context): SQLiteOpenHelper(context, "musicDB", null, 1) 
             }
         } catch (e: Exception){
             Log.d("Log_debug", "${e.printStackTrace()}")
+            musicList = null
         } finally {
             cursor?.close()
             db.close()

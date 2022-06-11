@@ -2,7 +2,6 @@ package com.example.simple_musicplayer
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.Filter
@@ -95,7 +94,7 @@ class MainListAdapter(val context: Context, var musicList: MutableList<Music>):
                         if (mainActivity.typeOfList == Type.FAVORITE){
 
                             //현재 목록에서 해당 음악 제거 -> nowPlaying에 의해 playMusicList에 적용
-                            mainActivity.displayMusicList.remove(filteredMusic[position])
+                            mainActivity.displayMusicList?.remove(filteredMusic[position])
 
                             //삭제된 음악의 다음 곡 재생
                             if (mainActivity.currentMusic?.equals(filteredMusic[position]) == true){
@@ -114,7 +113,6 @@ class MainListAdapter(val context: Context, var musicList: MutableList<Music>):
         //현재 재생 곡에 해당하는 뷰의 백그라운드 컬러 변경
         if (mainActivity.currentMusic?.equals(filteredMusic[position]) == true){
             binding.root.setBackgroundResource(R.drawable.main_item_view_shape_focused)
-            Log.d("Log_debug", "${filteredMusic[position]} focused")
         } else {
             binding.root.setBackgroundResource(R.drawable.main_item_view_shape)
         }
@@ -145,7 +143,6 @@ class MainListAdapter(val context: Context, var musicList: MutableList<Music>):
         //SearchView의 입력값에 따라 결과를 리턴해주는 함수
         override fun performFiltering(charSequence: CharSequence?): FilterResults {
             val filterString = charSequence.toString()
-            Log.d("Log_debug", "${filterString}")
             val results = FilterResults()
 
             //검색이 필요없을 경우를 위해 원본 배열을 복제
